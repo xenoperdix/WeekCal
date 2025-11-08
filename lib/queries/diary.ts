@@ -62,11 +62,11 @@ export async function fetchDiaryEntries(day?: string): Promise<DiaryEntriesResul
   const { data: entries } = await supabase
     .from("diary_entries")
     .select("id, occurred_at, grams, nutrients_cache, food_items(name)")
-    .returns<DiaryEntryRecord[]>()
     .eq("user_id", session.user.id)
     .gte("occurred_at", start)
     .lte("occurred_at", end)
-    .order("occurred_at", { ascending: false });
+    .order("occurred_at", { ascending: false })
+    .returns<DiaryEntryRecord[]>();
 
   const totals = (entries ?? []).reduce<DiaryTotals>(
     (acc, entry) => {
