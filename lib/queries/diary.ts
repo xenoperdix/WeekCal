@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "../supabase/server";
 import { parseLondonDate, startOfLondonWeek, todayInLondon } from "../time";
+import type { Database } from "../types";
 
 export async function fetchDiaryEntries(day?: string) {
   const supabase = createServerSupabaseClient();
@@ -23,10 +24,9 @@ export async function fetchDiaryEntries(day?: string) {
     fibre_g?: number | null;
   };
 
-  type DiaryEntryRecord = {
-    id: string;
-    occurred_at: string;
-    grams: number | string;
+  type DiaryEntryRow = Database["public"]["Tables"]["diary_entries"]["Row"];
+
+  type DiaryEntryRecord = Pick<DiaryEntryRow, "id" | "occurred_at" | "grams"> & {
     nutrients_cache: DiaryEntryNutrients | null;
     food_items: {
       name: string | null;
@@ -34,8 +34,9 @@ export async function fetchDiaryEntries(day?: string) {
   };
 
   const { data: entries } = await supabase
-    .from<DiaryEntryRecord>("diary_entries")
+    .from("diary_entries")
     .select("id, occurred_at, grams, nutrients_cache, food_items(name)")
+    .returns<DiaryEntryRecord[]>()
     .eq("user_id", session.user.id)
     .gte("occurred_at", start)
     .lte("occurred_at", end)
