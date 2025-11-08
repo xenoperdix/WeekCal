@@ -19,6 +19,7 @@ async function signIn(formData: FormData) {
 
 export default function SignInPage() {
   async function handleSignIn(formData: FormData) {
+    "use server";
     await signIn(formData);
     redirect("/auth/check-email");
   }
