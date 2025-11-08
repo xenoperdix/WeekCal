@@ -17,8 +17,24 @@ export async function fetchDiaryEntries(day?: string) {
   const start = `${targetDay}T00:00:00+00`;
   const end = `${targetDay}T23:59:59+00`;
 
+  type DiaryEntryNutrients = {
+    kcal?: number | null;
+    protein_g?: number | null;
+    fibre_g?: number | null;
+  };
+
+  type DiaryEntryRecord = {
+    id: string;
+    occurred_at: string;
+    grams: number | string;
+    nutrients_cache: DiaryEntryNutrients | null;
+    food_items: {
+      name: string | null;
+    } | null;
+  };
+
   const { data: entries } = await supabase
-    .from("diary_entries")
+    .from<DiaryEntryRecord>("diary_entries")
     .select("id, occurred_at, grams, nutrients_cache, food_items(name)")
     .eq("user_id", session.user.id)
     .gte("occurred_at", start)
@@ -27,7 +43,7 @@ export async function fetchDiaryEntries(day?: string) {
 
   const totals = (entries ?? []).reduce(
     (acc, entry) => {
-      const nutrients = (entry.nutrients_cache as { kcal?: number; protein_g?: number; fibre_g?: number } | null) ?? {};
+      const nutrients = entry.nutrients_cache ?? {};
       return {
         kcal: acc.kcal + Number(nutrients.kcal ?? 0),
         protein: acc.protein + Number(nutrients.protein_g ?? 0),
@@ -45,7 +61,7 @@ export async function fetchDiaryEntries(day?: string) {
       occurred_at: entry.occurred_at,
       grams: Number(entry.grams),
       nutrients_cache: entry.nutrients_cache,
-      food_name: (entry as any).food_items?.name ?? "Food"
+      food_name: entry.food_items?.name ?? "Food"
     })),
     totals
   };
